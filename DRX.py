@@ -36,6 +36,13 @@ def main():
         marks = st.checkbox("Marcar picos", value=True)
         annotations = st.checkbox("Etiquetar posiciones 2θ", value=False)
         st.subheader("Estética")
+        default_y_title = "Intensidad normalizada (u.a., 0–100)" if normalized else "Intensidad (unidades del archivo)"
+        if stacked:
+            default_y_title += " + desplazamiento"
+        y_title = st.text_input(
+            "Título del eje Y", value=default_y_title, key="y_axis_title",
+            help="Escriba el texto que aparecerá en el gráfico y las exportaciones. Déjelo vacío para ocultar el título.",
+        )
         axis_size = st.slider("Tamaño de fuente de ejes", 8, 22, 12)
         legend_size = st.slider("Tamaño de leyenda", 6, 18, 10)
         legend_options = {
@@ -122,8 +129,7 @@ def main():
             zf.writestr(f"{idx+1:02d}_datos.xy", export.to_csv(index=False, header=False, sep="\t", float_format="%.10g"))
         zf.writestr("LEEME.txt", "Datos sin offset; columnas: 2theta (grados), intensidad.\nNormalización min-max 0–100: " + str(normalized) + "\nOrden de archivos:\n" + "\n".join(f"{i+1:02d}_datos.xy: {s['filename']} | {s['label']}" for i, s in enumerate(series)))
     ax.set_xlabel("2θ (°)", fontsize=axis_size)
-    ylabel = "Intensidad normalizada (u.a., 0–100)" if normalized else "Intensidad (unidades del archivo)"
-    ax.set_ylabel(ylabel + (" + desplazamiento" if stacked else ""), fontsize=axis_size)
+    ax.set_ylabel(y_title, fontsize=axis_size)
     if crop:
         ax.set_xlim(xmin, xmax)
     ax.tick_params(labelsize=axis_size)

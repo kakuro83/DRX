@@ -38,8 +38,20 @@ def main():
         st.subheader("Estética")
         axis_size = st.slider("Tamaño de fuente de ejes", 8, 22, 12)
         legend_size = st.slider("Tamaño de leyenda", 6, 18, 10)
-        legend = st.selectbox("Posición de leyenda", ["best", "upper right", "upper left", "lower right", "none"])
-        yticks = st.checkbox("Mostrar valores del eje Y", value=True)
+        legend_options = {
+            "Automática (dentro)": "best",
+            "Arriba a la derecha (dentro)": "upper right",
+            "Arriba a la izquierda (dentro)": "upper left",
+            "Abajo a la derecha (dentro)": "lower right",
+            "Derecha (fuera)": "outside_right",
+            "Debajo (fuera)": "outside_bottom",
+            "Sin leyenda": "none",
+        }
+        legend_label = st.selectbox("Posición de leyenda", list(legend_options))
+        legend = legend_options[legend_label]
+        legend_columns = 1
+        if legend == "outside_bottom":
+            legend_columns = st.number_input("Columnas de la leyenda", min_value=1, max_value=6, value=3, step=1)
         width = st.slider("Ancho de figura (pulgadas)", 6, 16, 10)
         height = st.slider("Alto de figura (pulgadas)", 4, 12, 6)
     if not files:
@@ -115,10 +127,17 @@ def main():
     if crop:
         ax.set_xlim(xmin, xmax)
     ax.tick_params(labelsize=axis_size)
-    if not yticks:
-        ax.set_yticks([])
+    ax.set_yticks([])
+    ax.yaxis.get_offset_text().set_visible(False)
     ax.spines[["top", "right"]].set_visible(False)
-    if legend != "none":
+    if legend == "outside_right":
+        ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5),
+                  borderaxespad=0, fontsize=legend_size, frameon=False)
+    elif legend == "outside_bottom":
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18),
+                  ncol=min(legend_columns, len(series)),
+                  borderaxespad=0, fontsize=legend_size, frameon=False)
+    elif legend != "none":
         ax.legend(loc=legend, fontsize=legend_size, frameon=False)
     fig.tight_layout()
     st.pyplot(fig)

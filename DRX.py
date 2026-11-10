@@ -73,6 +73,7 @@ def main():
         st.error("El máximo de 2θ debe ser mayor que el mínimo.")
         return
     st.header("2. Configuración de series")
+    st.caption("Marque Mostrar en el gráfico para elegir las series del gráfico y las exportaciones. Al ocultarlas se conservan sus ajustes.")
     palette = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
     series = []
     for i, file in enumerate(files):
@@ -93,16 +94,20 @@ def main():
             st.warning(f"{file.name}: menos de tres puntos en el rango seleccionado.")
             continue
         with st.expander(file.name, expanded=(i == 0)):
+            show_series = st.checkbox("Mostrar en el gráfico", value=True, key="show"+key)
             c0, c1, c2, c3 = st.columns([1, 3, 2, 2])
             order = c0.number_input("Orden", min_value=1, value=i + 1, step=1, key="order"+key)
             label = c1.text_input("Etiqueta", file.name.rsplit(".", 1)[0], key="label"+key)
             color = c2.color_picker("Color", palette[i % len(palette)], key="color"+key)
             style = c3.selectbox("Estilo de línea", ["-", "--", "-.", ":"], key="style"+key)
             st.caption(f"{len(df)} puntos · 2θ: {df.x.min():.4f}–{df.x.max():.4f}°")
+        if not show_series:
+            continue
         y = normalize(df.y) if normalized else df.y.to_numpy()
         peaks = detect_peaks(df.x, df.y, prominence, separation, wavelength)
         series.append(dict(df=df, y=y, peaks=peaks, order=order, label=label, color=color, style=style, filename=file.name))
     if not series:
+        st.info("No hay series seleccionadas con datos en el rango. Active Mostrar en el gráfico en al menos un archivo.")
         return
     series.sort(key=lambda item: item["order"])
     amplitude = max(float(np.ptp(item["y"])) for item in series) or 1.0
